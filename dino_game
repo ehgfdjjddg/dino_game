@@ -1,0 +1,94 @@
+import arcade
+from arcade import AnimationKeyframe
+
+SCREEN_WIDTH = 640
+SCREEN_HEIGHT = 480
+SCREEN_TITLE = "DINO T-REX"
+SPRITE_SCALING = 0.5
+
+
+class Cactus(arcade.Sprite):
+    def update(self):
+        self.center_x -= self.change_x
+
+
+class Dino(arcade.AnimatedTimeBasedSprite):
+    def __init__(self, scale):
+        super().__init__()
+        a = arcade.AnimationKeyframe(0, 100, arcade.load_texture("dino1.png"))
+        self.frames.append(a)
+        a = arcade.AnimationKeyframe(0, 100, arcade.load_texture("dino2.png"))
+        self.frames.append(a)
+        a = arcade.AnimationKeyframe(0, 100, arcade.load_texture("dino3.png"))
+        self.frames.append(a)
+        self.scale = scale
+
+    def update(self):
+        self.center_y += self.change_y
+        self.change_y -= 0.3
+        if self.center_y <= 180:
+            self.is_jump = False
+            self.center_y = 180
+
+
+class MyGame(arcade.Window):
+    def __init__(self, width, height, title):
+        super().__init__(width, height, title)
+        self.background = None
+        self.sprites = None
+        self.dino = None
+        self.cactus = None
+        self.score = 0
+        self.game = True
+
+    def on_draw(self):
+        arcade.start_render()
+        if self.game:
+            arcade.draw_texture_rectangle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT,
+                                          self.background)
+            self.sprites.draw()
+            output = "Score: " + str(self.score)
+            arcade.draw_text(output, 60, SCREEN_HEIGHT - 30, arcade.color.BLACK, 20)
+        else:
+            self.background = arcade.load_texture("desertGO.png")
+            arcade.draw_texture_rectangle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT,
+                                          self.background)
+
+    def update(self, delta_time: float):
+        if self.cactus.right <= 0:
+            self.cactus.left = SCREEN_WIDTH
+            self.score += 1
+        if arcade.check_for_collision(self.cactus, self.dino):
+            self.dino.stop()
+            self.cactus.stop()
+            self.game = False
+        self.sprites.update()
+        self.sprites.update_animation()
+
+    def setup(self):
+        self.background = arcade.load_texture("desert.png")
+        self.sprites = arcade.SpriteList()
+        self.cactus = Cactus("cactus.png", SPRITE_SCALING)
+        self.dino = Dino(0.5)
+        self.dino.center_x = 100
+        self.dino.center_y = 180
+        self.dino.is_jump = False
+        self.sprites.append(self.dino)
+        self.cactus.center_x = SCREEN_WIDTH
+        self.cactus.center_y = 180
+        self.cactus.change_x = 5
+        self.sprites.append(self.cactus)
+
+    def on_key_press(self, key, modifiers):
+        if arcade.key.SPACE and not self.dino.is_jump:
+            self.dino.is_jump = True
+            self.dino.change_y = 9
+
+    def on_key_release(self, key, modifiers):
+        pass
+
+
+game = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+game.setup()
+arcade.run()
+
